@@ -33,6 +33,7 @@ public class PiePercentView extends View {
     private int mRadius;
     private boolean mIsArcTextVisible;
     private boolean mIsInnerTextVisible;
+    private float total;
 
 
     public PiePercentView(Context context, @Nullable AttributeSet attrs) {
@@ -120,31 +121,45 @@ public class PiePercentView extends View {
         int paddingBottom = getPaddingBottom();
         int width = mWidth-paddingLeft-paddingRight;
         int height = mHeight-paddingTop-paddingBottom;
+        float startAngle = mStartAngle;
         mRadius = Math.min(width,height)/2;
         canvas.translate(mWidth/2,mHeight/2);
         RectF rect = new RectF(-mRadius,-mRadius,mRadius,mRadius);
         RectF rectf = new RectF(-mRadius/2,-mRadius/2,mRadius/2,mRadius/2);
         Path path = new Path();
         for(PieData pie:mData){
+            float percent = pie.getValue()/total;
             mPaint.setColor(pie.getColor());
-            canvas.drawArc(rect,mStartAngle,360*pie.getPercent(),true,mPaint);
+            canvas.drawArc(rect,startAngle,360*percent,true,mPaint);
             if(mIsArcTextVisible){
-                path.addArc(rect,mStartAngle,360*pie.getPercent());
-                String content = (int)(pie.getPercent()*100)+"%";
+                path.addArc(rect,startAngle,360*percent);
+                String content = (int)(percent*100)+"%";
                 float strWidth = mArcTextPaint.measureText(content);
-                canvas.drawTextOnPath(content,path, (float) ((Math.PI*mRadius*pie.getPercent()*2-strWidth)/2),-5, mArcTextPaint);
+                //如果占比百分百，则文字绘制在水平方向
+                if(percent==1.0f){
+                    canvas.drawTextOnPath(content,path, (float) (2*Math.PI*mRadius*270/360-strWidth/2),-10, mArcTextPaint);
+                }else{
+                    canvas.drawTextOnPath(content,path, (float) ((Math.PI*mRadius*percent*2-strWidth)/2),-10, mArcTextPaint);
+                }
+
                 path.reset();
             }
 
             if(mIsInnerTextVisible){
-                path.addArc(rectf,mStartAngle,360*pie.getPercent());
+                path.addArc(rectf,startAngle,360*percent);
                 String name = pie.getName();
                 float strWidhName = mInnerTextPaint.measureText(name);
-                canvas.drawTextOnPath(name,path, (float) ((Math.PI*mRadius*pie.getPercent()-strWidhName)/2),0,mInnerTextPaint);
+                //如果占比百分百，则文字绘制在水平方向
+                if(percent==1.0f){
+                    canvas.drawTextOnPath(name,path, (float) (Math.PI*mRadius*270/360-strWidhName/2),0,mInnerTextPaint);
+                }else{
+                    canvas.drawTextOnPath(name,path, (float) ((Math.PI*mRadius*percent-strWidhName)/2),0,mInnerTextPaint);
+                }
+
                 path.reset();
             }
 
-            mStartAngle+=360*pie.getPercent();
+            startAngle+=360*percent;
 
         }
 
@@ -174,22 +189,25 @@ public class PiePercentView extends View {
         invalidate();
     }
 
-    public void setData(List<PieData> mData) {
-        this.mData = mData;
+    public void setData(List<PieData> datas) {
+        this.mData = datas;
+        int sum = 0;
+        for(PieData pie:datas){
+            sum+=pie.getValue();
+        }
+        total = sum;
         invalidate();
     }
 
     public static class PieData{
         private String name;
-        private float percent;
+        private float value;
         private int color;
 
-        public PieData() {
-        }
 
-        public PieData(String name, float percent, int color) {
+        public PieData(String name, float value, int color) {
             this.name = name;
-            this.percent = percent;
+            this.value = value;
             this.color = color;
         }
 
@@ -201,12 +219,12 @@ public class PiePercentView extends View {
             this.name = name;
         }
 
-        public float getPercent() {
-            return percent;
+        public float getValue() {
+            return value;
         }
 
-        public void setPercent(float percent) {
-            this.percent = percent;
+        public void setValue(float value) {
+            this.value = value;
         }
 
         public int getColor() {

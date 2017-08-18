@@ -53,10 +53,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         List<PiePercentView.PieData> dataList = new ArrayList<>();
         for(int i=0;i<count;i++){
-            PiePercentView.PieData pieData = new PiePercentView.PieData();
-            pieData.setColor(mColors[i]);
-            pieData.setName("a"+i);
-            pieData.setPercent(values[i]/100f);
+            PiePercentView.PieData pieData = new PiePercentView.PieData("a"+i,values[i],mColors[i]);
             dataList.add(pieData);
         }
         return dataList;
